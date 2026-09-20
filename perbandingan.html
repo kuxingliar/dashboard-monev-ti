@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perbandingan | Monev TI UHO</title>
+<link rel="stylesheet" href="assets/style.css">
+
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<div class="flex h-screen overflow-hidden">
+  <aside class="sticky top-0 flex h-screen w-72.5 flex-shrink-0 flex-col overflow-y-auto border-r border-gray-200 bg-white px-5" id="sidebar"></aside>
+<script>renderSidebar('perbandingan.html');</script>
+  <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+    <main>
+      <div class="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6 2xl:p-10">
+
+        <div class="mb-6">
+          <h2 class="text-title-md font-bold text-gray-800">Perbandingan Mahasiswa vs Dosen</h2>
+          <p class="text-sm text-gray-500 mt-1">Membandingkan indikator suasana akademik yang punya topik sama antara sudut pandang mahasiswa dan dosen, bukan sekadar mencocokkan nomor Q.</p>
+        </div>
+
+        <div class="rounded-xl p-4 text-sm mb-6" style="background:#E4EEE9;color:#215B4A;border:1px solid #C4DBD1;">
+          <strong>Temuan konsisten:</strong> Sarana &amp; prasarana (ruang kuliah, laboratorium, perpustakaan) muncul sebagai
+          titik terlemah di kedua sudut pandang, mahasiswa maupun dosen. Ini indikasi kuat isu ini nyata, bukan cuma persepsi sepihak.
+        </div>
+
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6 mb-6">
+          <h3 class="font-semibold text-gray-800 mb-4">Rata-rata per Kategori: Mahasiswa vs Dosen</h3>
+          <div id="chartKategori" style="height:300px"></div>
+          <table class="w-full text-sm mt-4">
+            <thead><tr class="text-left text-xs text-gray-400 border-b border-gray-100">
+              <th class="pb-2 font-medium">Kategori</th><th class="pb-2 font-medium text-right">Mahasiswa</th><th class="pb-2 font-medium text-right">Dosen</th>
+            </tr></thead>
+            <tbody id="katTableBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+          <p class="text-xs text-gray-400 mt-3">Kategori "Sarana dan Prasarana" konsisten jadi yang terendah di kedua sisi.</p>
+        </div>
+
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+          <div class="flex items-baseline justify-between mb-2">
+            <h3 class="font-semibold text-gray-800">Pertanyaan dengan Topik Identik di Kedua Survei</h3>
+            <span class="text-xs text-gray-400" id="identikCount"></span>
+          </div>
+          <p class="text-xs text-gray-400 mb-4">Pertanyaan yang teksnya sama persis di kuesioner mahasiswa &amp; dosen, jadi perbandingannya paling valid.</p>
+          <table class="w-full text-sm">
+            <thead><tr class="text-left text-xs text-gray-400 border-b border-gray-100">
+              <th class="pb-2 font-medium">Pertanyaan</th><th class="pb-2 font-medium text-right">Mahasiswa</th><th class="pb-2 font-medium text-right">Dosen</th>
+            </tr></thead>
+            <tbody id="identikBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+
+<script>
+const pb = DATA.perbandingan;
+document.getElementById('katTableBody').innerHTML = pb.kategori_compare.map(c => {
+  return `<tr>
+    <td class="py-2">${esc(c.nama_mhs)}</td>
+    <td class="py-2 text-right">${c.mhs.toFixed(2)}</td>
+    <td class="py-2 text-right">${c.dsn.toFixed(2)}</td>
+  </tr>`;
+}).join('');
+
+document.getElementById('identikCount').textContent = pb.pasangan_identik.length + ' pertanyaan';
+document.getElementById('identikBody').innerHTML = pb.pasangan_identik.map(q => `
+  <tr>
+    <td class="py-2">Q${q.nomor}: ${esc(q.teks)}</td>
+    <td class="py-2 text-right">${q.mhs.toFixed(2)}</td>
+    <td class="py-2 text-right">${q.dsn.toFixed(2)}</td>
+  </tr>
+`).join('');
+
+new ApexCharts(document.querySelector("#chartKategori"), {
+  chart: { type: 'radar', height: 300, toolbar: { show: false } },
+  series: [
+    { name: 'Mahasiswa', data: pb.kategori_compare.map(c => c.mhs) },
+    { name: 'Dosen', data: pb.kategori_compare.map(c => c.dsn) }
+  ],
+  xaxis: { categories: pb.kategori_compare.map(c => c.kode) },
+  yaxis: { min: 1, max: 5, tickAmount: 4, labels: { style: { fontSize: '10px' } } },
+  colors: [COLOR_ACCENT, COLOR_WARN],
+  markers: { size: 3, colors: [COLOR_ACCENT, COLOR_WARN] },
+  stroke: { width: 2 },
+  fill: { opacity: 0.2 },
+  dataLabels: { enabled: false },
+  legend: { position: 'bottom' },
+}).render();
+
+setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+</script>
+
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

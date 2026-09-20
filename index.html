@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overview | Monev TI UHO</title>
+<link rel="stylesheet" href="assets/style.css">
+
+</head>
+<body>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<div class="flex h-screen overflow-hidden">
+  <aside class="sticky top-0 flex h-screen w-72.5 flex-shrink-0 flex-col overflow-y-auto border-r border-gray-200 bg-white px-5" id="sidebar"></aside>
+<script>renderSidebar('index.html');</script>
+  <div class="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+    <main>
+      <div class="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6 2xl:p-10">
+
+        <div class="mb-6">
+          <h2 class="text-title-md font-bold text-gray-800">Overview</h2>
+          <p class="text-sm text-gray-500 mt-1">Ringkasan Monev Pembelajaran &amp; Suasana Akademik, Prodi TI</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 md:grid-cols-4 mb-6" id="stat-cards"></div>
+
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6 mb-6" id="finding-card"></div>
+
+        <div class="grid grid-cols-1 gap-4 md:gap-6 xl:grid-cols-2">
+          <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+            <div class="flex items-baseline justify-between mb-4">
+              <h3 class="font-semibold text-gray-800">Kinerja Dosen Terbaik</h3>
+              <span class="text-xs text-gray-400">min. 5 responden</span>
+            </div>
+            <div id="chartDosen"></div>
+          </div>
+          <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+            <div class="flex items-baseline justify-between mb-4">
+              <h3 class="font-semibold text-gray-800">5 Aspek Terendah</h3>
+              <span class="text-xs text-gray-400">mahasiswa vs dosen</span>
+            </div>
+            <div id="chartAspek"></div>
+          </div>
+        </div>
+
+<script>
+const ov = DATA.overview;
+document.getElementById('stat-cards').innerHTML = `
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+    <span class="text-sm text-gray-500">Dosen</span>
+    <h4 class="text-title-sm mt-2 font-bold text-gray-800">${ov.total_dosen}</h4>
+  </div>
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+    <span class="text-sm text-gray-500">Mata Kuliah</span>
+    <h4 class="text-title-sm mt-2 font-bold text-gray-800">${ov.total_mk}</h4>
+  </div>
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+    <span class="text-sm text-gray-500">Responden Pembelajaran</span>
+    <h4 class="text-title-sm mt-2 font-bold text-gray-800">${ov.pembelajaran.n}</h4>
+    <span class="text-xs text-gray-400">rata-rata ${ov.pembelajaran.rata.toFixed(2)}</span>
+  </div>
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+    <span class="text-sm text-gray-500">Suasana Akademik</span>
+    <h4 class="text-title-sm mt-2 font-bold text-gray-800">${ov.sa_mhs.n + ov.sa_dsn.n}</h4>
+    <span class="text-xs text-gray-400">Mahasiswa ${ov.sa_mhs.rata.toFixed(2)} &middot; Dosen ${ov.sa_dsn.rata.toFixed(2)}</span>
+  </div>
+`;
+
+document.getElementById('finding-card').innerHTML = `
+  <div class="flex items-center gap-4">
+    <div class="text-title-md font-bold" style="color:${COLOR_WARN}">Q${ov.aspek1.nomor}</div>
+    <div>
+      <div class="font-semibold text-gray-800">Skor terendah gabungan</div>
+      <div class="text-sm text-gray-500">${esc(ov.aspek1.teks)}</div>
+      <div class="text-sm mt-1">Mahasiswa <strong>${ov.aspek1.mhs}</strong> &middot; Dosen <strong>${ov.aspek1.dsn}</strong></div>
+    </div>
+  </div>
+`;
+
+new ApexCharts(document.querySelector("#chartDosen"), {
+  chart: { type: 'bar', height: 280, toolbar: { show: false } },
+  series: [{ name: 'Rata-rata', data: ov.top_dosen.map(d => d.rata) }],
+  xaxis: { categories: ov.top_dosen.map(d => d.nama.split(',')[0]), min: 1, max: 5 },
+  plotOptions: { bar: { horizontal: true, borderRadius: 3, distributed: false } },
+  colors: [COLOR_ACCENT],
+  dataLabels: { enabled: false },
+  grid: { borderColor: '#F1F1F1' },
+  tooltip: { y: { title: { formatter: (_, o) => ov.top_dosen[o.dataPointIndex].nama } } },
+}).render();
+
+new ApexCharts(document.querySelector("#chartAspek"), {
+  chart: { type: 'bar', height: 280, toolbar: { show: false } },
+  series: [
+    { name: 'Mahasiswa', data: ov.aspek_terendah.map(a => a.mhs) },
+    { name: 'Dosen', data: ov.aspek_terendah.map(a => a.dsn) }
+  ],
+  xaxis: { categories: ov.aspek_terendah.map(a => 'Q'+a.nomor) },
+  yaxis: { min: 1, max: 5 },
+  plotOptions: { bar: { borderRadius: 3, columnWidth: '55%' } },
+  colors: [COLOR_ACCENT, COLOR_WARN],
+  dataLabels: { enabled: false },
+  legend: { position: 'bottom' },
+  grid: { borderColor: '#F1F1F1' },
+}).render();
+
+setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+</script>
+
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>
