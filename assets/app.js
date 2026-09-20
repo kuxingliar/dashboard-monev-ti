@@ -46,9 +46,18 @@ function renderSidebar(activeHref) {
           </li>`;
   }).join('');
 
-  document.getElementById('sidebar').innerHTML = `
+  const aside = document.getElementById('sidebar');
+  aside.style.position = 'fixed';
+  aside.style.top = '0';
+  aside.style.left = '0';
+  aside.style.zIndex = '50';
+  aside.style.transform = 'translateX(-100%)';
+  aside.style.transition = 'transform 0.2s ease';
+  aside.style.backgroundColor = '#fff';
+
+  aside.innerHTML = `
     <div class="flex items-center gap-2.5 pt-8 pb-7">
-      <img src="assets/logo-uho.png" alt="Logo UHO" style="width:36px;height:36px;object-fit:contain;flex-shrink:0;">
+      <span style="width:34px;height:34px;border-radius:9px;background:#2F6F5E;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">M</span>
       <div class="flex flex-col leading-tight">
         <strong class="text-gray-800">Monev TI</strong>
         <span class="text-xs text-gray-400">Univ. Halu Oleo</span>
@@ -60,4 +69,36 @@ function renderSidebar(activeHref) {
     <div class="mt-auto pb-6 text-xs text-gray-400 border-t border-gray-100 pt-4">
       Program Studi Teknik Informatika
     </div>`;
+
+  const toggle = document.createElement('button');
+  toggle.id = 'sidebarToggle';
+  toggle.setAttribute('aria-label', 'Buka menu');
+  toggle.style.cssText = 'position:fixed;top:16px;left:16px;z-index:40;background:#fff;border:1px solid #E4E7EC;border-radius:8px;padding:8px;cursor:pointer;';
+  toggle.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#344054" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+  document.body.appendChild(toggle);
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'sidebarBackdrop';
+  backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:45;display:none;';
+  document.body.appendChild(backdrop);
+
+  function openSidebar() {
+    aside.style.transform = 'translateX(0)';
+    backdrop.style.display = 'block';
+  }
+  function closeSidebar() {
+    aside.style.transform = 'translateX(-100%)';
+    backdrop.style.display = 'none';
+  }
+  toggle.addEventListener('click', openSidebar);
+  backdrop.addEventListener('click', closeSidebar);
+
+  const style = document.createElement('style');
+  style.textContent = `
+    @media (min-width: 768px) {
+      #sidebarToggle, #sidebarBackdrop { display: none !important; }
+      #sidebar { position: sticky !important; transform: none !important; height: 100vh; }
+    }
+  `;
+  document.head.appendChild(style);
 }
