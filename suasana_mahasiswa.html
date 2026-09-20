@@ -30,19 +30,13 @@
             <h3 class="font-semibold text-gray-800 mb-4">Rata-rata per Kategori</h3>
             <div id="chartKategori" style="height:240px"></div>
             <ul class="text-xs text-gray-500 mt-3 space-y-1" id="kategoriLegend"></ul>
+            <button type="button" id="toggleDetail" class="text-sm mt-4" style="color:#2F6F5E;">Lihat rincian per pertanyaan &#9662;</button>
+            <div id="kategoriAccordion" class="hidden mt-3"></div>
           </div>
           <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
             <h3 class="font-semibold text-gray-800 mb-4">Distribusi Skor Jawaban</h3>
             <div id="chartDist" style="height:240px"></div>
           </div>
-        </div>
-
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
-          <div class="flex items-baseline justify-between mb-4">
-            <h3 class="font-semibold text-gray-800">Rata-rata per Pertanyaan (Q1-Q21)</h3>
-            <span class="text-xs text-gray-400">terendah ke tertinggi</span>
-          </div>
-          <div id="chartQ" style="height:540px"></div>
         </div>
 
 <script>
@@ -67,7 +61,7 @@ document.getElementById('statCards').innerHTML = `
 `;
 
 document.getElementById('kategoriLegend').innerHTML = sm.kategori.map(c => `
-  <li><strong>${KODE_KATEGORI_MHS[c.nama] || '?'}</strong> — ${esc(c.nama)}</li>
+  <li><strong>${KODE_KATEGORI_MHS[c.nama] || '?'}</strong>: ${esc(c.nama)}</li>
 `).join('');
 
 new ApexCharts(document.querySelector("#chartKategori"), {
@@ -92,15 +86,44 @@ new ApexCharts(document.querySelector("#chartDist"), {
   grid: { borderColor: '#F1F1F1' },
 }).render();
 
-new ApexCharts(document.querySelector("#chartQ"), {
-  chart: { type: 'bar', height: 540, toolbar: { show: false } },
-  series: [{ name: 'Rata-rata', data: sm.q_avgs.map(q => q.rata) }],
-  xaxis: { categories: sm.q_avgs.map(q => 'Q'+q.nomor+' ('+q.kategori+')'), min: 1, max: 5 },
-  plotOptions: { bar: { horizontal: true, borderRadius: 3, distributed: true } },
-  colors: barColors(sm.q_avgs.map(q => q.rata), 4.0),
-  dataLabels: { enabled: false }, legend: { show: false },
-  grid: { borderColor: '#F1F1F1' },
-}).render();
+const qByCatMhs = {};
+sm.q_avgs.forEach(q => { (qByCatMhs[q.kategori] = qByCatMhs[q.kategori] || []).push(q); });
+const lowestCatMhs = sm.kategori.slice().sort((a,b) => a.rata - b.rata)[0];
+const lowestKodeMhs = KODE_KATEGORI_MHS[lowestCatMhs.nama];
+
+document.getElementById('kategoriAccordion').innerHTML = ['A','B','C','D','E','F'].map(kode => {
+  const catInfo = sm.kategori.find(c => KODE_KATEGORI_MHS[c.nama] === kode);
+  const qs = (qByCatMhs[kode] || []).slice().sort((a,b) => a.nomor - b.nomor);
+  const isOpen = false;
+  return `
+    <div class="border border-gray-200 rounded-lg mb-2" style="overflow:hidden;">
+      <button type="button" class="accordion-toggle w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-gray-800" data-kode="${kode}">
+        <span>${kode}: ${esc(catInfo ? catInfo.nama : '')}</span>
+        <span class="text-xs text-gray-400">rata-rata ${catInfo ? catInfo.rata.toFixed(2) : '-'}</span>
+      </button>
+      <div class="accordion-panel px-4 pb-3 ${isOpen ? '' : 'hidden'}" data-panel="${kode}">
+        ${qs.map(q => `
+          <div class="flex items-center justify-between text-sm py-1.5 border-t border-gray-100">
+            <span class="text-gray-500">Q${q.nomor}: ${esc(q.teks)}</span>
+            <span class="font-medium">${q.rata.toFixed(2)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}).join('');
+
+document.querySelectorAll('.accordion-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelector('.accordion-panel[data-panel="' + btn.dataset.kode + '"]').classList.toggle('hidden');
+  });
+});
+
+document.getElementById('toggleDetail').addEventListener('click', () => {
+  const el = document.getElementById('kategoriAccordion');
+  const btn = document.getElementById('toggleDetail');
+  el.classList.toggle('hidden');
+  btn.innerHTML = el.classList.contains('hidden') ? 'Lihat rincian per pertanyaan &#9662;' : 'Sembunyikan rincian &#9652;';
+});
 
 setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
 </script>
